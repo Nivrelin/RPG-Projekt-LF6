@@ -1,0 +1,246 @@
+
+import java.applet.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Main extends Applet implements Runnable, KeyListener {
+  // Initialisierung der Variablen
+
+  int x_pos = 5;			// x - Position des Balles
+  int y_pos = 5;		// y - Position des Balles
+  int x_plus;		// Geschwindigkeit des Balles in x - Richtung
+  int y_plus;
+  int appletsize_x = 300; // Größe des Applets in x - Richtung
+  int appletsize_y = 300;	// Größe des Applets in y - Richtung
+  int hoehe = 1;
+  int breite = 1;
+  private boolean rand = true;
+  // Variablen für die Doppelpufferung
+  private Image dbImage;
+  private Graphics dbg;
+  Image img;
+  MediaTracker tr;
+  private int pos[][] = new int[101][101];
+
+  @Override
+  public void init() {
+    setBackground(Color.blue);
+    addKeyListener(this);
+    pos = einlesen(breite, hoehe);
+  }
+
+  @Override
+  public void start() {
+    // Schaffen eines neuen Threads, in dem das Spiel läuft
+    Thread th = new Thread(this);
+    // Starten des Threads
+    th.start();
+  }
+
+  @Override
+  public void stop() {
+  }
+
+  @Override
+  public void destroy() {
+  }
+
+  public void run() {
+    // Erniedrigen der ThreadPriority um zeichnen zu erleichtern
+    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+
+
+    // Solange true ist läuft der Thread weiter
+    while (true) {
+      // Wenn der Ball den rechten Rand berührt, dann prallt er ab
+      // Verändern der x- Koordinate
+
+      if (randTest(pos)) {
+        x_pos = x_pos + x_plus;
+        y_pos = y_pos + y_plus;
+      } else {
+      }
+      // Neuzeichnen des Applets
+      repaint();
+      if (x_plus != 0 || y_plus != 0) {
+        int zufall = (int) (Math.random() * (100 - 1) + 1);
+        if (zufall <= 15) {
+//TODO Schefflers Code abrufen
+        }
+      }
+      try {
+        // Stoppen des Threads für in Klammern angegebene Millisekunden
+        Thread.sleep(20);
+      } catch (InterruptedException ex) {
+        // do nothing
+      }
+
+      // Zurücksetzen der ThreadPriority auf Maximalwert
+      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+    }
+  }
+
+  /** Update - Methode, Realisierung der Doppelpufferung zur Reduzierung des Bildschirmflackerns */
+  @Override
+  public void update(Graphics g) {
+    // Initialisierung des DoubleBuffers
+    if (dbImage == null) {
+      dbImage = createImage(this.getSize().width, this.getSize().height);
+      dbg = dbImage.getGraphics();
+    }
+
+    // Bildschirm im Hintergrund löschen
+    dbg.setColor(getBackground());
+    dbg.fillRect(0, 0, this.getSize().width, this.getSize().height);
+
+    // Auf gelöschten Hintergrund Vordergrund zeichnen
+    dbg.setColor(getForeground());
+    paint(dbg);
+
+    // Nun fertig gezeichnetes Bild Offscreen auf dem richtigen Bildschirm anzeigen
+    g.drawImage(dbImage, 0, 0, this);
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    g.setColor(Color.red);
+    Image ii = getImage(getCodeBase(), "land.jpg");
+
+    tr = new MediaTracker(this);
+    img = getImage(getCodeBase(), "earth.gif");
+    tr.addImage(img, 1);
+    g.drawImage(img, 0, 0, this);
+
+    if (x_plus == 0 && y_plus == 0) {
+      g.drawImage(ii, x_pos, y_pos, this);
+    } else {
+      tr = new MediaTracker(this);
+      img = getImage(getCodeBase(), "anigif.gif");
+      tr.addImage(img, 0);
+      g.drawImage(img, x_pos, y_pos, this);
+    }
+
+
+
+  }
+
+  public void keyPressed(KeyEvent e) {
+
+    int key = e.getKeyCode();
+
+    if (key == KeyEvent.VK_LEFT) {
+      x_plus = -1;
+    }
+
+    if (key == KeyEvent.VK_RIGHT) {
+      x_plus = 1;
+    }
+
+    if (key == KeyEvent.VK_UP) {
+      y_plus = -1;
+    }
+
+    if (key == KeyEvent.VK_DOWN) {
+      y_plus = 1;
+    }
+  }
+
+  public void keyReleased(KeyEvent e) {
+    int key = e.getKeyCode();
+
+    if (key == KeyEvent.VK_LEFT) {
+      x_plus = 0;
+    }
+
+    if (key == KeyEvent.VK_RIGHT) {
+      x_plus = 0;
+    }
+
+    if (key == KeyEvent.VK_UP) {
+      y_plus = 0;
+    }
+
+    if (key == KeyEvent.VK_DOWN) {
+      y_plus = 0;
+    }
+  }
+
+  public void keyTyped(KeyEvent e) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public boolean randTest(int position[][]) {
+
+    if (position[x_pos + x_plus][y_pos + y_plus] != 0) {
+      rand = false;
+      System.out.println("pos_x:" + x_pos + " pos_y:" + y_pos + " Wert:" + position[x_pos + x_plus][y_pos + y_plus]);
+//      if (position[x_pos + x_plus][y_pos + y_plus] == 2) {
+//        if (x_pos + x_plus == 100 || x_pos + x_plus == 99) {
+//          x_pos = 1;
+//          breite--;
+//          pos = einlesen(breite, hoehe);
+//          System.out.println("Höhe:" + hoehe + "\nBreit:" + breite);
+//        } else if (x_pos + x_plus == 0 || x_pos + x_plus == 1) {
+//          x_pos = 99;
+//          breite++;
+//          pos = einlesen(breite, hoehe);
+//          System.out.println("Höhe:" + hoehe + "\nBreit:" + breite);
+//        } else if (y_pos + y_plus == 100 || y_pos + y_plus == 99) {
+//          y_pos = 1;
+//          hoehe++;
+//          pos = einlesen(breite, hoehe);
+//          System.out.println("Höhe:" + hoehe + "\nBreit:" + breite);
+//        } else if (y_pos + y_plus == 0 || y_pos + y_plus == 1) {
+//          y_pos = 99;
+//          hoehe--;
+//          pos = einlesen(breite, hoehe);
+//          System.out.println("Höhe:" + hoehe + "\nBreit:" + breite);
+//        }
+//      }
+    } else {
+      rand = true;
+    }
+    return rand;
+  }
+
+  public int[][] einlesen(int breite, int hoehe) {
+    BufferedReader br = null;
+    int datei[][] = new int[101][101];
+    String test = "";
+    try {
+      br = new BufferedReader(new InputStreamReader(new FileInputStream(getCodeBase().getPath() + "array_" + 1 + 1 + ".txt")));
+
+      String line;
+      int i = 0;
+      int j;
+      while ((line = br.readLine()) != null) {
+        j = 1;
+        test="";
+        while (line.charAt(line.length()-j) != '/') {
+          datei[j][i] = Integer.parseInt("" + line.charAt(j));
+          test = test+ line.charAt(j);
+          j++;
+        }
+        System.out.println(test);
+        i++;
+      }
+
+    } catch (IOException ex) {
+      Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+    } finally {
+      try {
+        br.close();
+      } catch (IOException ex) {
+        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+    return datei;
+  }
+}
